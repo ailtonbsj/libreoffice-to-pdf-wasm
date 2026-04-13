@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Libreoffice to PDF Converter</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+
+  <div class="logo">
+    <div class="logo-icon">
+      <svg viewBox="0 0 24 24">
+        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+        <polyline points="14,2 14,8 20,8" />
+        <line x1="12" y1="11" x2="12" y2="17" />
+        <polyline points="9,14 12,17 15,14" />
+      </svg>
+    </div>
+    <div>
+      <h1>Libreoffice → PDF</h1>
+      <p>Browser-native conversion via LibreOffice WASM</p>
+    </div>
+  </div>
+
+  <div class="card">
+    <div style="text-align:center;margin-bottom:1.25rem">
+      <div class="tag"><span></span>100% client-side · no uploads</div>
+      <div class="formats">
+        <span class="fmt highlight">ODT</span>
+        <span class="fmt">ODS</span>
+        <span class="fmt">ODP</span>
+        <span class="fmt">DOCX</span>
+        <span class="fmt">DOC</span>
+        <span class="fmt">XLSX</span>
+        <span class="fmt">PPTX</span>
+        <span class="fmt">RTF</span>
+        <span style="font-size:.72rem;color:var(--muted);align-self:center">→ PDF</span>
+      </div>
+    </div>
+
+    <div id="notice" class="notice">
+      <svg viewBox="0 0 24 24">
+        <circle cx="12" cy="12" r="10" />
+        <line x1="12" y1="8" x2="12" y2="12" />
+        <line x1="12" y1="16" x2="12.01" y2="16" />
+      </svg>
+      <div>First conversion downloads ~60 MB of LibreOffice WASM files and may take 30–60 seconds. Subsequent
+        conversions are instant.</div>
+    </div>
+
+    <div id="drop-zone" class="drop-zone">
+      <svg viewBox="0 0 24 24">
+        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+        <polyline points="14,2 14,8 20,8" />
+        <line x1="12" y1="11" x2="12" y2="17" />
+        <polyline points="9,14 12,17 15,14" />
+      </svg>
+      <h3>Drop your file here</h3>
+      <p>or click to browse · ODT, DOCX, XLSX, ODS, PPTX, RTF…</p>
+      <input type="file" id="file-input"
+        accept=".odt,.fodt,.ods,.odp,.odg,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.rtf,.txt,.csv,.html,.epub">
+    </div>
+
+    <div id="file-info" class="file-info" style="display:none">
+      <div class="file-icon">
+        <svg viewBox="0 0 24 24">
+          <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+          <polyline points="14,2 14,8 20,8" />
+        </svg>
+      </div>
+      <div class="file-name" id="fname"></div>
+      <div class="file-size" id="fsize"></div>
+    </div>
+
+    <button class="btn" id="convert-btn" disabled>
+      <svg viewBox="0 0 24 24">
+        <polyline points="1,4 1,10 7,10" />
+        <path d="M3.51 15a9 9 0 1 0 .49-3.51" />
+      </svg>
+      Convert to PDF
+    </button>
+
+    <div id="progress-wrap" class="progress-wrap" style="display:none">
+      <div class="progress-label">
+        <span id="prog-msg">Loading…</span>
+        <span id="prog-pct">0%</span>
+      </div>
+      <div class="progress-bar">
+        <div class="progress-fill" id="prog-fill" style="width:0%"></div>
+      </div>
+      <div class="status" id="status"></div>
+    </div>
+
+    <div id="result" class="result" style="display:none">
+      <svg viewBox="0 0 24 24">
+        <polyline points="20,6 9,17 4,12" />
+      </svg>
+      <div class="result-text">
+        <p>Conversion complete!</p>
+        <span id="result-info"></span>
+      </div>
+      <a id="dl-link" class="dl-btn">
+        <svg viewBox="0 0 24 24">
+          <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+          <polyline points="7,10 12,15 17,10" />
+          <line x1="12" y1="15" x2="12" y2="3" />
+        </svg>
+        Download PDF
+      </a>
+    </div>
+
+    <div id="error" class="error" style="display:none">
+      <svg viewBox="0 0 24 24">
+        <circle cx="12" cy="12" r="10" />
+        <line x1="12" y1="8" x2="12" y2="12" />
+        <line x1="12" y1="16" x2="12.01" y2="16" />
+      </svg>
+      <div id="error-msg"></div>
+    </div>
+
+    <div id="wasm-init-notice">
+      Powered by ailtonbsj
+    </div>
+  </div>
+
+  <script src="script.js"></script>
+  <script>
+    const params = new URLSearchParams(window.location.search);
+    const file = params.get('file');
+    const result = document.querySelector('#result');
+
+    async function onWorkerReady() {
+      console.log('Work is ready! ✅​');
+      const res = await fetch(file);
+      const text = await res.text();
+      const byteArray = Uint8Array.fromBase64(text);
+      console.log("Converting...");
+      await converting(byteArray, file.split('.').at(-1), file.split('/').at(-1));
+      const fileUrl = `${protocol}//${currentHost}/api/remove/?url=${file}`;
+      fetch(fileUrl);
+      waitConversionComplete();
+    }
+
+    async function waitWorkReady() {
+      if (workerReady) onWorkerReady();
+      else {
+        console.log('Work is not ready. Waiting 2 seconds ...');
+        setTimeout(waitWorkReady, 2000);
+      }
+    }
+
+    function onConversionComplete() {
+      document.querySelector('#dl-link').click();
+    }
+
+    function waitConversionComplete() {
+      if (result.style.display !== 'none') onConversionComplete();
+      else {
+        console.log('Conversion is not complete. Waiting 1 second ...');
+        setTimeout(waitConversionComplete, 1000);
+      }
+    }
+
+    if (file != null && file !== '') {
+      waitWorkReady();
+    }
+  </script>
+</body>
+
+</html>

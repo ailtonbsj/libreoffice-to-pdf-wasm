@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Form</title>
+</head>
+
+<body>
+    <form action="http://localhost:3000/api/upload" method="POST" enctype="multipart/form-data">
+        <label for="file-upload">Choose a file:</label>
+        <input type="file" id="file-upload" name="file">
+        <br><br>
+        <button type="submit">Upload File</button>
+    </form>
+</body>
+
+<script>
+    const protocol = window.location.protocol;
+    const currentHost = window.location.host;
+    const action = `${protocol}//${currentHost}/api/upload`;
+    const form = document.querySelector('form');
+    form.setAttribute('action', action);
+</script>
+
+</html>
